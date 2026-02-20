@@ -386,6 +386,10 @@ disconnectBtn.addEventListener('click', () => {
     removeVoiceAvatar('local');
 
     Object.keys(peers).forEach(id => { stopAudioAnalysis(id); removeVoiceAvatar(id); peers[id].pc.close(); delete peers[id]; });
+
+    // Fallback: sweep any remaining zombie avatars that might have survived a failed connection
+    document.querySelectorAll('.voice-avatar-wrapper').forEach(el => el.remove());
+
     if (localStream) { localStream.getTracks().forEach(t => t.stop()); localStream = null; }
     if (screenStream) { stopScreenShare(); }
 
@@ -450,6 +454,9 @@ screenBtn.addEventListener('click', async () => {
             else screenStream.getTracks().forEach(t => p.pc.addTrack(t, screenStream));
         });
 
+        // Trigger manual renegotiation since we added a track
+        Object.keys(peers).forEach(socketId => initiateCall(socketId));
+
     } catch (e) {
         console.error("Partage d'écran annulé.", e);
     }
@@ -480,6 +487,9 @@ socket.on('voice:others', (others) => {
         let labelName = user.username || "Flux";
         Object.keys(PREDEFINED_PROFILES).forEach(k => { if (PREDEFINED_PROFILES[k].id === user.userId) labelName = k; });
         addVoiceAvatar(user.socketId, labelName, null);
+
+        // Polite calling: The late joiner initiates the offers manually
+        initiateCall(user.socketId);
     });
 });
 
@@ -537,16 +547,25 @@ function createPeer(targetSocketId, targetUserId) {
             setupAudioAnalysis(targetSocketId, e.streams[0]);
         }
     };
-    pc.onnegotiationneeded = async () => {
-        try {
-            const offer = await pc.createOffer();
-            await pc.setLocalDescription(offer);
-            socket.emit('voice:offer', { target: targetSocketId, sdp: pc.localDescription, userId: currentUser.id });
-        } catch (e) { }
-    };
+
+    // onnegotiationneeded removed to prevent WebRTC Glare
+
     if (localStream) localStream.getTracks().forEach(t => pc.addTrack(t, localStream));
     if (screenStream) screenStream.getTracks().forEach(t => pc.addTrack(t, screenStream));
     return pc;
+}
+
+// Manual call initiation to prevent WebRTC Glare race conditions
+async function initiateCall(targetSocketId) {
+    if (!peers[targetSocketId]) return;
+    const pc = peers[targetSocketId].pc;
+    try {
+        const offer = await pc.createOffer();
+        await pc.setLocalDescription(offer);
+        socket.emit('voice:offer', { target: targetSocketId, sdp: pc.localDescription, userId: currentUser.id });
+    } catch (e) {
+        console.error("Error creating offer:", e);
+    }
 }
 
 function addVideoStream(id, label, stream, muted) {
