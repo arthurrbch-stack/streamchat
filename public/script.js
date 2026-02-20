@@ -320,16 +320,14 @@ function updateArenaLayout() {
 }
 
 function addVoiceAvatar(id, username, stream) {
-    // SECURITY: Prevent duplicate avatars for the same username
-    const existingAvatar = document.querySelector(`.voice-avatar-wrapper[data-username="${username}"]`);
-    if (existingAvatar && id !== 'local') return; // Ignore if this user is already in the grid
-
     let wrap = document.getElementById(`voice-avatar-${id}`);
+
+    // Si l'avatar existe déjà (créé par voice:others ou voice:user-joined avant le flux)
     if (!wrap) {
         wrap = document.createElement('div');
         wrap.className = 'voice-avatar-wrapper';
         wrap.id = `voice-avatar-${id}`;
-        wrap.dataset.username = username; // Store username for duplication check
+        wrap.dataset.username = username;
         let avatarSrc = PREDEFINED_PROFILES[username] ? PREDEFINED_PROFILES[username].avatarUrl : 'https://api.dicebear.com/7.x/identicon/svg?seed=' + username;
 
         let audioHtml = '';
@@ -345,9 +343,12 @@ function addVoiceAvatar(id, username, stream) {
         voiceGrid.appendChild(wrap);
     }
 
+    // Attach stream to existing or new avatar
     if (stream && id !== 'local') {
         const audioEl = document.getElementById(`audio-${id}`);
-        if (audioEl) audioEl.srcObject = stream;
+        if (audioEl && !audioEl.srcObject) {
+            audioEl.srcObject = stream;
+        }
     }
 
     updateArenaLayout();
@@ -474,10 +475,20 @@ socket.on('voice:others', (others) => {
         if (user.userId === currentUser.id) return; // Prevent connecting to local clone
         const pc = createPeer(user.socketId, user.userId);
         peers[user.socketId] = { pc, userId: user.userId };
+
+        // Force avatar creation immediately, Audio stream will attach later when ontrack fires
+        let labelName = user.username || "Flux";
+        Object.keys(PREDEFINED_PROFILES).forEach(k => { if (PREDEFINED_PROFILES[k].id === user.userId) labelName = k; });
+        addVoiceAvatar(user.socketId, labelName, null);
     });
 });
 
-socket.on('voice:user-joined', (data) => { /* wait for offer */ });
+socket.on('voice:user-joined', (data) => {
+    // We already know they are joining, draw them!
+    let labelName = data.username || "Flux";
+    Object.keys(PREDEFINED_PROFILES).forEach(k => { if (PREDEFINED_PROFILES[k].id === data.userId) labelName = k; });
+    addVoiceAvatar(data.socketId, labelName, null);
+});
 
 socket.on('voice:user-left', (sid) => {
     if (peers[sid]) { peers[sid].pc.close(); delete peers[sid]; }

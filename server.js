@@ -135,19 +135,41 @@ io.on('connection', (socket) => {
         if (activeObj) {
             activeObj.inVoice = true;
 
-            db.get(`SELECT username FROM users WHERE id = ?`, [activeObj.userId], (err, row) => {
-                const username = row ? row.username : "Inconnu";
-                const othersInVoice = [];
+            // Il faut envoyer le pseudo de CE nouvel utilisateur aux autres,
+            // MAIS il faut aussi récupérer le pseudo de TOUS les autes pour l'envoyer à ce nouvel utilisateur.
+            const userIdsInVoice = [];
+            const socketMap = {}; // mapping userId -> socketId
 
-                for (const [sId, aObj] of activeSockets.entries()) {
-                    if (sId !== socket.id && aObj.inVoice) {
-                        othersInVoice.push({ socketId: sId, userId: aObj.userId });
-                    }
+            for (const [sId, aObj] of activeSockets.entries()) {
+                if (aObj.inVoice) {
+                    userIdsInVoice.push(aObj.userId);
+                    if (sId !== socket.id) socketMap[aObj.userId] = sId;
                 }
+            }
 
-                socket.emit('voice:others', othersInVoice);
-                socket.broadcast.emit('voice:user-joined', { socketId: socket.id, userId: activeObj.userId, username });
-            });
+            if (userIdsInVoice.length > 0) {
+                const placeholders = userIdsInVoice.map(() => '?').join(',');
+                db.all(`SELECT id, username FROM users WHERE id IN (${placeholders})`, userIdsInVoice, (err, rows) => {
+                    if (!err && rows) {
+                        let myUsername = "Inconnu";
+                        const othersInVoice = [];
+
+                        rows.forEach(row => {
+                            if (row.id === activeObj.userId) {
+                                myUsername = row.username;
+                            } else if (socketMap[row.id]) {
+                                othersInVoice.push({ socketId: socketMap[row.id], userId: row.id, username: row.username });
+                            }
+                        });
+
+                        // On envoie la liste complete (avec pseudo) à celui qui rejoint
+                        socket.emit('voice:others', othersInVoice);
+
+                        // On avertit les autres que quelqu'un a rejoint
+                        socket.broadcast.emit('voice:user-joined', { socketId: socket.id, userId: activeObj.userId, username: myUsername });
+                    }
+                });
+            }
         }
     });
 
