@@ -51,6 +51,7 @@ app.use(express.json()); // Pour lire le body JSON pour les requêtes API
 
 // stocker temporairement l'état des connexions (voix, sockets actuels)
 const activeSockets = new Map(); // socket.id -> { userId, inVoice }
+const chatHistory = []; // In-memory array for chat history
 
 io.on('connection', (socket) => {
     console.log('Nouvelle connexion socket:', socket.id);
@@ -83,13 +84,8 @@ io.on('connection', (socket) => {
             }
         });
 
-        // Envoyer l'historique des 50 derniers messages au nouveau venu
-        db.all(`SELECT * FROM messages ORDER BY timestamp DESC LIMIT 50`, [], (err, rows) => {
-            if (!err) {
-                const history = rows.reverse(); // remettre dans l'ordre chrono
-                socket.emit('chat:history', history);
-            }
-        });
+        // Envoyer l'historique des 50 derniers messages au nouveau venu depuis la RAM
+        socket.emit('chat:history', chatHistory.slice(-50));
 
         // Notifier les autres
         socket.broadcast.emit('user:joined', { userId, username });
@@ -104,18 +100,24 @@ io.on('connection', (socket) => {
             db.get(`SELECT username FROM users WHERE id = ?`, [activeObj.userId], (err, row) => {
                 if (row) {
                     const timestamp = Date.now();
-                    // Sauvegarder en base
+                    const messageObj = {
+                        userId: activeObj.userId,
+                        username: row.username,
+                        text: text,
+                        timestamp: timestamp
+                    };
+
+                    // Sauvegarder en RAM (limité aux 100 derniers pour éviter les fuites)
+                    chatHistory.push(messageObj);
+                    if (chatHistory.length > 100) chatHistory.shift();
+
+                    // Sauvegarder en base (au cas où, mais non requis pour le cache rapide)
                     db.run(`INSERT INTO messages (userId, username, text, timestamp) VALUES (?, ?, ?, ?)`,
                         [activeObj.userId, row.username, text, timestamp]
                     );
 
                     // Diffuser à tout le monde
-                    io.emit('chat:message', {
-                        userId: activeObj.userId,
-                        username: row.username,
-                        text: text,
-                        timestamp: timestamp
-                    });
+                    io.emit('chat:message', messageObj);
                 }
             });
         }
