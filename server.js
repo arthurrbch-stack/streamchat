@@ -135,41 +135,34 @@ io.on('connection', (socket) => {
         if (activeObj) {
             activeObj.inVoice = true;
 
-            // Il faut envoyer le pseudo de CE nouvel utilisateur aux autres,
-            // MAIS il faut aussi récupérer le pseudo de TOUS les autes pour l'envoyer à ce nouvel utilisateur.
             const userIdsInVoice = [];
-            const socketMap = {}; // mapping userId -> socketId
-
             for (const [sId, aObj] of activeSockets.entries()) {
-                if (aObj.inVoice) {
-                    userIdsInVoice.push(aObj.userId);
-                    if (sId !== socket.id) socketMap[aObj.userId] = sId;
-                }
+                if (aObj.inVoice) userIdsInVoice.push(aObj.userId);
             }
 
-            if (userIdsInVoice.length > 0) {
-                const placeholders = userIdsInVoice.map(() => '?').join(',');
-                db.all(`SELECT id, username FROM users WHERE id IN (${placeholders})`, userIdsInVoice, (err, rows) => {
-                    if (!err && rows) {
-                        let myUsername = "Inconnu";
-                        const othersInVoice = [];
+            db.all(`SELECT id, username FROM users WHERE id IN (${userIdsInVoice.map(() => '?').join(',')})`, userIdsInVoice, (err, rows) => {
+                if (!err && rows) {
+                    let myUsername = "Inconnu";
+                    const othersInVoice = [];
 
-                        rows.forEach(row => {
-                            if (row.id === activeObj.userId) {
-                                myUsername = row.username;
-                            } else if (socketMap[row.id]) {
-                                othersInVoice.push({ socketId: socketMap[row.id], userId: row.id, username: row.username });
+                    rows.forEach(row => {
+                        if (row.id === activeObj.userId) {
+                            myUsername = row.username;
+                        } else {
+                            // Trouver la socket correspondante
+                            for (const [sId, aObj] of activeSockets.entries()) {
+                                if (aObj.inVoice && aObj.userId === row.id && sId !== socket.id) {
+                                    othersInVoice.push({ socketId: sId, userId: row.id, username: row.username });
+                                    break;
+                                }
                             }
-                        });
+                        }
+                    });
 
-                        // On envoie la liste complete (avec pseudo) à celui qui rejoint
-                        socket.emit('voice:others', othersInVoice);
-
-                        // On avertit les autres que quelqu'un a rejoint
-                        socket.broadcast.emit('voice:user-joined', { socketId: socket.id, userId: activeObj.userId, username: myUsername });
-                    }
-                });
-            }
+                    socket.emit('voice:others', othersInVoice);
+                    socket.broadcast.emit('voice:user-joined', { socketId: socket.id, userId: activeObj.userId, username: myUsername });
+                }
+            });
         }
     });
 
