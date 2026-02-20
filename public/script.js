@@ -143,7 +143,22 @@ const iceServers = {
     iceServers: [
         { urls: 'stun:stun.l.google.com:19302' },
         { urls: 'stun:stun1.l.google.com:19302' },
-        { urls: 'stun:stun.cloudflare.com:3478' }
+        { urls: 'stun:stun.cloudflare.com:3478' },
+        {
+            urls: 'turn:openrelay.metered.ca:80',
+            username: 'openrelayproject',
+            credential: 'openrelayproject'
+        },
+        {
+            urls: 'turn:openrelay.metered.ca:443',
+            username: 'openrelayproject',
+            credential: 'openrelayproject'
+        },
+        {
+            urls: 'turn:openrelay.metered.ca:443?transport=tcp',
+            username: 'openrelayproject',
+            credential: 'openrelayproject'
+        }
     ]
 };
 
@@ -382,12 +397,19 @@ disconnectBtn.addEventListener('click', () => {
     voiceChannelBtn.classList.remove('hidden');
     activeVoiceControls.classList.add('hidden');
 
+    // Clean up all peers first
+    Object.keys(peers).forEach(id => {
+        stopAudioAnalysis(id);
+        removeVoiceAvatar(id);
+        if (peers[id] && peers[id].pc) peers[id].pc.close();
+        delete peers[id];
+    });
+
+    // Clean up local
     stopAudioAnalysis('local');
     removeVoiceAvatar('local');
 
-    Object.keys(peers).forEach(id => { stopAudioAnalysis(id); removeVoiceAvatar(id); peers[id].pc.close(); delete peers[id]; });
-
-    // Fallback: sweep any remaining zombie avatars that might have survived a failed connection
+    // Nuclear fallback: remove ALL voice avatar wrappers from DOM
     document.querySelectorAll('.voice-avatar-wrapper').forEach(el => el.remove());
 
     if (localStream) { localStream.getTracks().forEach(t => t.stop()); localStream = null; }
@@ -478,30 +500,42 @@ function stopScreenShare() {
 }
 
 socket.on('voice:others', (others) => {
+    console.log('[VOICE] Received voice:others:', JSON.stringify(others));
     others.forEach(user => {
-        if (user.userId === currentUser.id) return; // Prevent connecting to local clone
-        const pc = createPeer(user.socketId, user.userId);
-        peers[user.socketId] = { pc, userId: user.userId };
+        if (user.userId === currentUser.id) return;
 
-        // Force avatar creation immediately, Audio stream will attach later when ontrack fires
-        let labelName = user.username || "Flux";
-        Object.keys(PREDEFINED_PROFILES).forEach(k => { if (PREDEFINED_PROFILES[k].id === user.userId) labelName = k; });
+        // Create avatar immediately
+        let labelName = user.username || 'Flux';
         addVoiceAvatar(user.socketId, labelName, null);
 
-        // Polite calling: The late joiner initiates the offers manually
+        // Create peer and initiate the call (I am the late joiner, I call them)
+        const pc = createPeer(user.socketId, user.userId);
+        peers[user.socketId] = { pc, userId: user.userId };
         initiateCall(user.socketId);
     });
 });
 
 socket.on('voice:user-joined', (data) => {
-    // We already know they are joining, draw them!
-    let labelName = data.username || "Flux";
-    Object.keys(PREDEFINED_PROFILES).forEach(k => { if (PREDEFINED_PROFILES[k].id === data.userId) labelName = k; });
+    console.log('[VOICE] Received voice:user-joined:', JSON.stringify(data));
+    if (data.userId === currentUser.id) return;
+
+    // Create avatar immediately 
+    let labelName = data.username || 'Flux';
     addVoiceAvatar(data.socketId, labelName, null);
+
+    // Create peer but DON'T initiate call (I am the early joiner, I wait for their offer)
+    if (!peers[data.socketId]) {
+        const pc = createPeer(data.socketId, data.userId);
+        peers[data.socketId] = { pc, userId: data.userId };
+    }
 });
 
 socket.on('voice:user-left', (sid) => {
-    if (peers[sid]) { peers[sid].pc.close(); delete peers[sid]; }
+    console.log('[VOICE] Received voice:user-left:', sid);
+    if (peers[sid]) {
+        if (peers[sid].pc) peers[sid].pc.close();
+        delete peers[sid];
+    }
     removeVideoStream(sid + '-video');
     removeVoiceAvatar(sid);
     stopAudioAnalysis(sid);
@@ -509,16 +543,32 @@ socket.on('voice:user-left', (sid) => {
 });
 
 socket.on('voice:offer', async (payload) => {
-    if (!peers[payload.caller]) { peers[payload.caller] = { pc: createPeer(payload.caller, payload.userId), userId: payload.userId }; }
-    const pc = peers[payload.caller].pc;
-    await pc.setRemoteDescription(new RTCSessionDescription(payload.sdp));
-    const answer = await pc.createAnswer();
-    await pc.setLocalDescription(answer);
-    socket.emit('voice:answer', { target: payload.caller, sdp: pc.localDescription });
+    console.log('[VOICE] Received offer from:', payload.caller);
+    try {
+        if (!peers[payload.caller]) {
+            const pc = createPeer(payload.caller, payload.userId);
+            peers[payload.caller] = { pc, userId: payload.userId };
+        }
+        const pc = peers[payload.caller].pc;
+        await pc.setRemoteDescription(new RTCSessionDescription(payload.sdp));
+        const answer = await pc.createAnswer();
+        await pc.setLocalDescription(answer);
+        socket.emit('voice:answer', { target: payload.caller, sdp: pc.localDescription });
+        console.log('[VOICE] Sent answer to:', payload.caller);
+    } catch (e) {
+        console.error('[VOICE] Error handling offer:', e);
+    }
 });
 
 socket.on('voice:answer', async (payload) => {
-    if (peers[payload.caller]) await peers[payload.caller].pc.setRemoteDescription(new RTCSessionDescription(payload.sdp));
+    console.log('[VOICE] Received answer from:', payload.caller);
+    try {
+        if (peers[payload.caller]) {
+            await peers[payload.caller].pc.setRemoteDescription(new RTCSessionDescription(payload.sdp));
+        }
+    } catch (e) {
+        console.error('[VOICE] Error handling answer:', e);
+    }
 });
 
 socket.on('voice:ice-candidate', async (payload) => {
@@ -529,33 +579,36 @@ socket.on('voice:ice-candidate', async (payload) => {
 
 function createPeer(targetSocketId, targetUserId) {
     const pc = new RTCPeerConnection(iceServers);
-    pc.onicecandidate = e => { if (e.candidate) socket.emit('voice:ice-candidate', { target: targetSocketId, candidate: e.candidate }); };
 
-    // Pour ne pas ajouter la vidéo + audio et faire doublon, on route les flux
+    pc.onicecandidate = e => {
+        if (e.candidate) socket.emit('voice:ice-candidate', { target: targetSocketId, candidate: e.candidate });
+    };
+
+    pc.oniceconnectionstatechange = () => {
+        console.log(`[VOICE] ICE state for ${targetSocketId}: ${pc.iceConnectionState}`);
+    };
+
     pc.ontrack = e => {
-        let labelName = "Flux";
+        let labelName = 'Flux';
         Object.keys(PREDEFINED_PROFILES).forEach(k => { if (PREDEFINED_PROFILES[k].id === targetUserId) labelName = k; });
 
-        const isVideo = e.streams[0].getVideoTracks().length > 0;
-
-        if (isVideo) {
-            // Flux de capture d'écran (Vidéo + Son système)
-            addVideoStream(targetSocketId + '-video', labelName + " (Stream)", e.streams[0], false);
-        } else if (e.track.kind === 'audio') {
-            // Flux de micro uniquement
-            addVoiceAvatar(targetSocketId, labelName, e.streams[0]);
-            setupAudioAnalysis(targetSocketId, e.streams[0]);
+        if (e.streams && e.streams[0]) {
+            const hasVideo = e.streams[0].getVideoTracks().length > 0;
+            if (hasVideo) {
+                addVideoStream(targetSocketId + '-video', labelName + ' (Stream)', e.streams[0], false);
+            } else if (e.track.kind === 'audio') {
+                addVoiceAvatar(targetSocketId, labelName, e.streams[0]);
+                setupAudioAnalysis(targetSocketId, e.streams[0]);
+            }
         }
     };
 
-    // onnegotiationneeded removed to prevent WebRTC Glare
-
+    // Add local tracks to the connection
     if (localStream) localStream.getTracks().forEach(t => pc.addTrack(t, localStream));
     if (screenStream) screenStream.getTracks().forEach(t => pc.addTrack(t, screenStream));
     return pc;
 }
 
-// Manual call initiation to prevent WebRTC Glare race conditions
 async function initiateCall(targetSocketId) {
     if (!peers[targetSocketId]) return;
     const pc = peers[targetSocketId].pc;
@@ -563,8 +616,9 @@ async function initiateCall(targetSocketId) {
         const offer = await pc.createOffer();
         await pc.setLocalDescription(offer);
         socket.emit('voice:offer', { target: targetSocketId, sdp: pc.localDescription, userId: currentUser.id });
+        console.log('[VOICE] Sent offer to:', targetSocketId);
     } catch (e) {
-        console.error("Error creating offer:", e);
+        console.error('[VOICE] Error creating offer:', e);
     }
 }
 
