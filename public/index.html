@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StreamChat V4 - Arthur & Lukas</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+
+<body>
+    <!-- Modal de Connexion / Paramètres Fixes -->
+    <div id="login-modal" class="modal-overlay">
+        <div class="glass-panel modal-content">
+            <div class="logo">
+                <i class="fa-solid fa-moon"></i> DuoChat
+            </div>
+            <h2>Qui es-tu ?</h2>
+
+            <div class="profile-cards">
+                <div class="profile-card" data-username="Arthur">
+                    <img src="https://api.dicebear.com/7.x/identicon/svg?seed=Arthur" alt="Arthur">
+                    <span>Arthur</span>
+                </div>
+                <div class="profile-card" data-username="Lukas">
+                    <img src="https://api.dicebear.com/7.x/identicon/svg?seed=Lukas" alt="Lukas">
+                    <span>Lukas</span>
+                </div>
+            </div>
+
+            <div class="theme-selector">
+                <p>Couleur d'accentuation</p>
+                <div class="color-options" id="color-options">
+                    <div class="color-dot active" data-color="#6366f1" style="background:#6366f1;"></div>
+                    <!-- Indigo -->
+                    <div class="color-dot" data-color="#ef4444" style="background:#ef4444;"></div> <!-- Red -->
+                    <div class="color-dot" data-color="#10b981" style="background:#10b981;"></div> <!-- Emerald -->
+                    <div class="color-dot" data-color="#f59e0b" style="background:#f59e0b;"></div> <!-- Amber -->
+                    <div class="color-dot" data-color="#ec4899" style="background:#ec4899;"></div> <!-- Pink -->
+                    <div class="color-dot" data-color="#06b6d4" style="background:#06b6d4;"></div> <!-- Cyan -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal des Paramètres (Thèmes, etc.) -->
+    <div id="settings-modal" class="modal-overlay hidden">
+        <div class="glass-panel modal-content settings-content">
+            <div class="menu-header"
+                style="justify-content: space-between; border-bottom: 1px solid var(--border); padding-bottom: 12px; margin-bottom: 20px;">
+                <h2 style="margin:0;"><i class="fa-solid fa-gear"></i> Paramètres</h2>
+                <button id="close-settings-btn" class="icon-btn small-btn"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+
+            <div class="settings-section">
+                <h3>Thèmes Premium</h3>
+                <div class="theme-grid" id="premium-theme-selector">
+                    <!-- Themes will be injected or defined here -->
+                    <div class="theme-card" data-theme="default">
+                        <div class="theme-preview" style="background: linear-gradient(135deg, #050505, #6366f1);"></div>
+                        <span>Défaut (Indigo)</span>
+                    </div>
+                    <div class="theme-card" data-theme="midnight">
+                        <div class="theme-preview" style="background: linear-gradient(135deg, #0f172a, #3b82f6);"></div>
+                        <span>Midnight</span>
+                    </div>
+                    <div class="theme-card" data-theme="cyberpunk">
+                        <div class="theme-preview" style="background: linear-gradient(135deg, #27272a, #ec4899);"></div>
+                        <span>Cyberpunk</span>
+                    </div>
+                    <div class="theme-card" data-theme="valorant">
+                        <div class="theme-preview" style="background: linear-gradient(135deg, #18181b, #ef4444);"></div>
+                        <span>Ignite (Valorant)</span>
+                    </div>
+                    <div class="theme-card" data-theme="caca">
+                        <div class="theme-preview" style="background: linear-gradient(135deg, #382618, #78350f);"></div>
+                        <span>Caca 💩</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Interface Principale (Duo Mode Fixe) -->
+    <div id="app" class="hidden">
+
+        <!-- Topbar Cockpit -->
+        <header class="topbar">
+            <div class="brand">
+                <i class="fa-solid fa-moon"></i> <span>DuoChat</span>
+            </div>
+
+            <div class="topbar-actions flex-row">
+                <div class="user-pill" id="settings-trigger">
+                    <img src="" id="top-avatar" class="avatar-img hidden" alt="avatar">
+                    <div class="avatar-fallback" id="top-avatar-fallback"><i class="fa-solid fa-user"></i></div>
+                    <span id="current-username">User</span>
+                    <i class="fa-solid fa-gear"></i>
+                </div>
+            </div>
+        </header>
+
+        <main class="content-area">
+
+            <!-- Panneau de Gauche : Stream / Vocale -->
+            <div class="media-panel">
+                <!-- Fenêtre Vidéo Ancrée (Non-flottante) -->
+                <div class="video-arena hidden" id="video-section">
+                    <!-- En-tête Video avec bouton de Plein Écran -->
+                    <div class="video-header">
+                        <span><i class="fa-solid fa-desktop"></i> Flux Vidéo</span>
+                        <div>
+                            <button class="icon-btn small-btn" id="fullscreen-btn" title="Plein Écran & Mode Théâtre"><i
+                                    class="fa-solid fa-expand"></i></button>
+                        </div>
+                    </div>
+                    <!-- Grille Vidéo -->
+                    <div class="video-grid" id="video-grid">
+                        <!-- Videos injectées ici -->
+                    </div>
+                    <!-- YouTube Overlay -->
+                    <div class="youtube-overlay hidden" id="youtube-overlay">
+                        <div class="youtube-header">
+                            <span><i class="fa-brands fa-youtube"></i> Lecteur Partagé (Synchronisé)</span>
+                            <button id="close-youtube-btn" class="icon-btn small-btn"><i
+                                    class="fa-solid fa-xmark"></i></button>
+                        </div>
+                        <div id="youtube-player-container"></div>
+                    </div>
+                    <!-- Grille Vocale (Avatars avec effet) -->
+                    <div class="voice-grid hidden" id="voice-grid">
+                        <!-- Avatars injectés ici -->
+                    </div>
+                </div>
+
+                <!-- Media Controls Section -->
+                <div class="media-controls-wrap">
+                    <button id="voice-channel-btn" class="action-btn join-call-btn" title="Rejoindre l'appel vocal">
+                        <i class="fa-solid fa-phone"></i> <span>Rejoindre le Vocal</span>
+                    </button>
+                    <div id="active-voice-controls" class="hidden flex-row">
+                        <div class="control-group">
+                            <button id="mic-btn" class="icon-btn" title="Microphone"><i
+                                    class="fa-solid fa-microphone"></i></button>
+                            <button id="screen-btn" class="icon-btn" title="Partager l'écran"><i
+                                    class="fa-solid fa-desktop"></i></button>
+                            <button id="mixer-btn" class="icon-btn" title="Mixeur Audio"><i
+                                    class="fa-solid fa-sliders"></i></button>
+                        </div>
+                        <div class="control-group danger">
+                            <button id="disconnect-btn" class="action-btn danger" title="Raccrocher"><i
+                                    class="fa-solid fa-phone-slash"></i> <span>Quitter</span></button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Panneau de Droite : Chat -->
+            <div class="chat-arena" id="chat-section">
+                <div class="messages-list custom-scrollbar" id="messages-list">
+                    <div class="message system">Connexion au canal privé authentifié...</div>
+                </div>
+
+                <div class="input-area">
+                    <div class="youtube-input-wrap hidden flex-row" id="youtube-input-wrap" style="margin-bottom: 8px;">
+                        <input type="text" id="youtube-url-input"
+                            placeholder="Collez un lien YouTube complet (ex: https://www.youtube.com/watch?v=...)">
+                        <button id="youtube-launch-btn" class="action-btn" style="background: #ef4444;"><i
+                                class="fa-solid fa-play"></i> Lancer</button>
+                    </div>
+                    <div class="chat-box flex-row">
+                        <button id="attach-btn" class="icon-btn small-btn" title="Envoyer une image (Max 5Mo)"><i
+                                class="fa-solid fa-plus"></i></button>
+                        <button id="youtube-toggle-btn" class="icon-btn small-btn" title="Watch Party YouTube"
+                            style="color: #ef4444;"><i class="fa-brands fa-youtube"></i></button>
+                        <input type="file" id="file-input" class="hidden" accept="image/*">
+                        <input type="text" id="chat-input" placeholder="Envoyer un message sécurisé..."
+                            autocomplete="off">
+                        <button id="send-btn" class="icon-btn brand"><i class="fa-solid fa-paper-plane"></i></button>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+
+        <!-- Panneau Mixeur Audio -->
+        <div id="mixer-panel" class="hidden glass-panel custom-scrollbar">
+            <div class="menu-header">
+                <span><i class="fa-solid fa-sliders"></i> Mixeur Audio</span>
+                <button id="close-mixer-btn" class="icon-btn small-btn"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div id="mixer-tracks" class="mixer-tracks">
+                <!-- Sliders injectés ici -->
+            </div>
+        </div>
+    </div>
+
+    <script src="https://www.youtube.com/iframe_api"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="script.js"></script>
+</body>
+
+</html>

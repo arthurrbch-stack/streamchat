@@ -1,0 +1,1011 @@
+:root {
+    /* Palette Dark Extreme */
+    --bg-base: #050505;
+    --bg-surface: #0a0a0a;
+    --bg-elevated: #121212;
+
+    /* Couleur d'accentuation dynamique modifiée par JS */
+    --accent: #6366f1;
+    --accent-hover: color-mix(in srgb, var(--accent) 80%, white);
+    --accent-glow: color-mix(in srgb, var(--accent) 30%, transparent);
+    --accent-faded: color-mix(in srgb, var(--accent) 15%, transparent);
+
+    --success: #10b981;
+    --danger: #ef4444;
+
+    --text-main: #f8fafc;
+    --text-muted: #64748b;
+    --border: #1e293b;
+
+    --radius-lg: 16px;
+    --radius-md: 12px;
+}
+
+/* Thèmes personnalisés appliqués sur le body */
+body.theme-midnight {
+    --bg-base: #020617;
+    --bg-surface: #0f172a;
+    --bg-elevated: #1e293b;
+    --accent: #3b82f6;
+    --border: #334155;
+    background-image: linear-gradient(to right, rgba(2, 6, 23, 0.9), rgba(2, 6, 23, 0.8)), url('https://images.unsplash.com/photo-1534447677768-be436bb09401?q=80&w=2094&auto=format&fit=crop');
+    background-size: cover;
+    background-position: center;
+}
+
+body.theme-cyberpunk {
+    --bg-base: #09090b;
+    --bg-surface: #18181b;
+    --bg-elevated: #27272a;
+    --accent: #ec4899;
+    --border: #3f3f46;
+    background-image: linear-gradient(to right, rgba(9, 9, 11, 0.9), rgba(9, 9, 11, 0.7)), url('https://images.unsplash.com/photo-1614850523459-c2f4c699c52e?q=80&w=2070&auto=format&fit=crop');
+    background-size: cover;
+    background-position: center;
+}
+
+body.theme-valorant {
+    --bg-base: #000000;
+    --bg-surface: #111111;
+    --bg-elevated: #18181b;
+    --accent: #ef4444;
+    --text-main: #ece8e1;
+    --border: #27272a;
+    background-image: linear-gradient(to right, rgba(0, 0, 0, 0.85), rgba(0, 0, 0, 0.75)), url('https://images.unsplash.com/photo-1605648916361-b1e6ce4cb385?q=80&w=2070&auto=format&fit=crop');
+    background-size: cover;
+    background-position: center;
+}
+
+body.theme-caca {
+    --bg-base: #291a10;
+    --bg-surface: #382618;
+    --bg-elevated: #452f1d;
+    --accent: #92400e;
+    --text-main: #fde68a;
+    --border: #78350f;
+    background-image: linear-gradient(to right, rgba(41, 26, 16, 0.9), rgba(41, 26, 16, 0.8)), url('https://images.unsplash.com/photo-1594916895822-1efb6b66fa50?q=80&w=2070&auto=format&fit=crop');
+    background-size: cover;
+    background-position: center;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: 'Outfit', sans-serif;
+    background-color: var(--bg-base);
+    color: var(--text-main);
+    height: 100vh;
+    overflow: hidden;
+    font-size: 16px;
+    background-image: radial-gradient(circle at 50% 0%, var(--accent-faded) 0%, transparent 60%);
+}
+
+.hidden {
+    display: none !important;
+}
+
+.flex-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+    background: #2a2a2a;
+    border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: #3a3a3a;
+}
+
+/* Modal & Selection Profils */
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.95);
+    backdrop-filter: blur(10px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+}
+
+.modal-content {
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    width: 90%;
+    max-width: 460px;
+    padding: 40px;
+    border-radius: var(--radius-lg);
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5), 0 0 0 1px var(--accent-faded);
+}
+
+.logo {
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--text-main);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+}
+
+.logo i {
+    color: var(--accent);
+    filter: drop-shadow(0 0 8px var(--accent-glow));
+}
+
+/* Cartes Profil Arthur / Lukas */
+.profile-cards {
+    display: flex;
+    justify-content: center;
+    gap: 24px;
+    margin-top: 10px;
+}
+
+.profile-card {
+    background: var(--bg-elevated);
+    border: 2px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 24px 20px;
+    cursor: pointer;
+    transition: all 0.2s;
+    width: 140px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+}
+
+.profile-card:hover {
+    border-color: var(--accent);
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px var(--accent-glow);
+}
+
+.profile-card img {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    background: #222;
+    object-fit: cover;
+    border: 2px solid var(--border);
+}
+
+.profile-card span {
+    font-weight: 600;
+    font-size: 18px;
+    color: var(--text-main);
+}
+
+/* Settings Modal Specifics */
+.settings-content {
+    max-width: 600px;
+}
+
+.settings-section h3 {
+    text-align: left;
+    margin-bottom: 16px;
+    color: var(--text-main);
+}
+
+.theme-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+    gap: 16px;
+}
+
+.theme-card {
+    background: var(--bg-elevated);
+    border: 2px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: center;
+}
+
+.theme-card:hover {
+    border-color: var(--accent);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px var(--accent-glow);
+}
+
+.theme-card.active {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px var(--accent-faded);
+}
+
+.theme-preview {
+    width: 100%;
+    height: 48px;
+    border-radius: 8px;
+    margin-bottom: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.theme-card span {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-muted);
+}
+
+.theme-card.active span {
+    color: var(--text-main);
+}
+
+/* Themes (Accents) */
+
+.theme-selector p {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-bottom: 12px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.color-options {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+}
+
+.color-dot {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2px solid transparent;
+    transition: transform 0.2s;
+}
+
+.color-dot:hover {
+    transform: scale(1.1);
+}
+
+.color-dot.active {
+    border-color: white;
+    transform: scale(1.1);
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
+}
+
+/* Main Layout V4 Duo Ancré */
+#app {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+/* Topbar */
+.topbar {
+    height: 64px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 24px;
+    background: var(--bg-surface);
+    border-bottom: 1px solid var(--border);
+    z-index: 100;
+    flex-shrink: 0;
+}
+
+.brand {
+    font-size: 20px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.brand i {
+    color: var(--accent);
+}
+
+.action-btn {
+    background: var(--accent-faded);
+    color: var(--accent);
+    border: 1px solid var(--accent);
+    padding: 0 16px;
+    height: 36px;
+    border-radius: 18px;
+    font-size: 14px;
+    font-weight: 600;
+    font-family: inherit;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.action-btn:hover {
+    background: var(--accent);
+    color: white;
+}
+
+.action-btn.danger {
+    background: rgba(239, 68, 68, 0.1);
+    color: var(--danger);
+    border-color: var(--danger);
+}
+
+.action-btn.danger:hover {
+    background: var(--danger);
+    color: white;
+}
+
+.icon-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: none;
+    background: var(--bg-elevated);
+    color: var(--text-main);
+    cursor: pointer;
+    transition: background 0.2s;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 15px;
+}
+
+.icon-btn:hover {
+    background: #2a2a2a;
+}
+
+.small-btn {
+    width: 30px;
+    height: 30px;
+    font-size: 13px;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.small-btn:hover {
+    background: var(--accent);
+}
+
+.user-pill {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: 30px;
+    padding: 6px 16px 6px 6px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.user-pill:hover {
+    background: #1a1a1a;
+}
+
+.avatar-img,
+.avatar-fallback {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.avatar-fallback {
+    background: var(--accent);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: white;
+    font-size: 12px;
+}
+
+.user-pill span {
+    font-weight: 500;
+    font-size: 14px;
+}
+
+.user-pill>i {
+    color: var(--text-muted);
+    font-size: 12px;
+}
+
+
+/* Content Layout (Vidéo à gauche / Chat à droite) */
+.content-area {
+    flex: 1;
+    display: flex;
+    flex-direction: row;
+    overflow: hidden;
+}
+
+/* Panneau Média (Vidéo/Vocale) */
+.media-panel {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background: #000;
+    border-right: 1px solid var(--border);
+    position: relative;
+    transition: flex 0.3s;
+}
+
+/* Video Arena - Ancrée */
+.video-arena {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    z-index: 50;
+    flex: 1;
+}
+
+.video-header {
+    height: 40px;
+    background: rgba(0, 0, 0, 0.8);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 16px;
+    font-size: 13px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.video-header span {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Video Grid */
+.video-grid {
+    flex: 1;
+    display: flex;
+    gap: 2px;
+    align-items: center;
+    justify-content: center;
+    background: #000;
+    overflow: hidden;
+}
+
+.video-wrapper {
+    flex: 1;
+    height: 100%;
+    position: relative;
+    background: #000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* Placeholder de l'écran local pour éviter le miroir infini */
+.local-screen-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    color: var(--text-muted);
+}
+
+.local-screen-placeholder i {
+    font-size: 48px;
+    color: var(--accent);
+}
+
+.video-wrapper video {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.video-label {
+    position: absolute;
+    bottom: 12px;
+    left: 12px;
+    background: rgba(0, 0, 0, 0.8);
+    padding: 4px 12px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+}
+
+/* Voice Grid (Discord Style Avatars) */
+.voice-grid {
+    flex: 1;
+    display: flex;
+    gap: 40px;
+    align-items: center;
+    justify-content: center;
+    background: #000;
+    overflow: hidden;
+}
+
+.voice-avatar-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    transition: transform 0.2s;
+}
+
+.voice-avatar {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 4px solid transparent;
+    transition: all 0.1s;
+    background: var(--bg-elevated);
+}
+
+/* Animation quand ça parle */
+.voice-avatar-wrapper.is-speaking .voice-avatar {
+    border-color: var(--accent);
+    box-shadow: 0 0 20px var(--accent-glow);
+    transform: scale(1.05);
+}
+
+/* Contrôles Media en bas */
+.media-controls-wrap {
+    height: 70px;
+    background: var(--bg-elevated);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 24px;
+    border-top: 1px solid var(--border);
+    flex-shrink: 0;
+}
+
+.join-call-btn {
+    font-size: 16px;
+    padding: 0 32px;
+    height: 44px;
+    border-radius: 22px;
+    background: var(--success);
+    color: white;
+    border: none;
+    box-shadow: 0 4px 14px rgba(16, 185, 129, 0.3);
+}
+
+.join-call-btn:hover {
+    background: #0ea5e9;
+    box-shadow: 0 4px 14px rgba(14, 165, 233, 0.3);
+}
+
+/* Control Groups in Voice */
+.control-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--bg-surface);
+    padding: 6px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+}
+
+.control-group.danger {
+    background: transparent;
+    border: none;
+    padding: 0;
+}
+
+.gap-large {
+    gap: 24px;
+}
+
+/* Mode Cinéma */
+#app.theater-mode .topbar {
+    display: none;
+}
+
+#app.theater-mode .chat-arena {
+    display: none;
+}
+
+#app.theater-mode .media-panel {
+    max-width: 100%;
+    border-right: none;
+}
+
+#app.theater-mode .media-controls-wrap {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.7);
+    border: 1px solid var(--border);
+    border-radius: 35px;
+    z-index: 100;
+    opacity: 0.2;
+    transition: opacity 0.3s;
+}
+
+#app.theater-mode .media-controls-wrap:hover {
+    opacity: 1;
+}
+
+.voice-name {
+    font-weight: 500;
+    font-size: 16px;
+    color: var(--text-main);
+}
+
+.vol-control {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(0, 0, 0, 0.5);
+    padding: 6px 12px;
+    border-radius: 12px;
+    margin-top: -8px;
+}
+
+.vol-control i {
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+.vol-slider {
+    width: 60px;
+    cursor: pointer;
+    accent-color: var(--accent);
+}
+
+.video-label-wrap {
+    position: absolute;
+    bottom: 12px;
+    left: 12px;
+    background: rgba(0, 0, 0, 0.8);
+    padding: 4px 12px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.video-label-text {
+    font-size: 13px;
+    font-weight: 500;
+}
+
+/* Mixeur Audio Panel */
+#mixer-panel {
+    position: absolute;
+    bottom: 90px;
+    left: 20px;
+    z-index: 1000;
+    width: 250px;
+    max-height: 400px;
+    padding: 16px;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+    border: 1px solid var(--border);
+    background: rgba(15, 23, 42, 0.95);
+    backdrop-filter: blur(10px);
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+#mixer-panel .menu-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 14px;
+    color: var(--text-main);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+}
+
+.mixer-tracks {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.mixer-track {
+    background: rgba(0, 0, 0, 0.3);
+    padding: 12px;
+    border-radius: 8px;
+}
+
+.mixer-track-name {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-main);
+    margin-bottom: 8px;
+    display: block;
+}
+
+.mixer-track-control {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.mixer-track-control i {
+    font-size: 14px;
+    color: var(--text-muted);
+}
+
+.mixer-track-control .vol-slider {
+    flex: 1;
+    cursor: pointer;
+    accent-color: var(--accent);
+}
+
+/* Style de plein écran direct sur video-grid ou voice-grid */
+.video-grid:fullscreen,
+.voice-grid:fullscreen {
+    background: #000;
+    width: 100%;
+    height: 100%;
+    display: flex !important;
+}
+
+.video-grid:fullscreen .video-wrapper video {
+    object-fit: contain;
+}
+
+/* Chat Section */
+.chat-arena {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background: var(--bg-base);
+    transition: max-width 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s, padding 0.3s;
+    max-width: 500px;
+    /* Base width */
+    min-width: 300px;
+}
+
+.chat-arena.chat-collapsed {
+    max-width: 0;
+    min-width: 0;
+    opacity: 0;
+    padding: 0;
+    border-left: none;
+}
+
+/* YouTube Features */
+.youtube-input-wrap {
+    background: var(--bg-elevated);
+    padding: 8px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border);
+}
+
+.youtube-input-wrap input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    color: var(--text-main);
+    padding: 8px;
+    outline: none;
+    font-size: 14px;
+}
+
+.youtube-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 50;
+    background: #000;
+    display: flex;
+    flex-direction: column;
+}
+
+.youtube-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 20px;
+    background: linear-gradient(to bottom, rgba(0, 0, 0, 0.8), transparent);
+    color: white;
+    font-weight: 600;
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 60;
+}
+
+#youtube-player-container {
+    flex: 1;
+    width: 100%;
+    height: 100%;
+}
+
+/* Ping & FPS Stats Overlay */
+.stats-overlay {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: rgba(0, 0, 0, 0.7);
+    color: var(--text-main);
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-family: monospace;
+    font-weight: bold;
+    display: flex;
+    gap: 8px;
+    pointer-events: none;
+    z-index: 10;
+    backdrop-filter: blur(4px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.ping-good {
+    color: #10b981;
+}
+
+.ping-ok {
+    color: #f59e0b;
+}
+
+.ping-bad {
+    color: #ef4444;
+}
+
+.messages-list {
+    flex: 1;
+    padding: 24px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.message {
+    display: flex;
+    gap: 16px;
+}
+
+.msg-avatar {
+    width: 40px;
+    height: 40px;
+    flex-shrink: 0;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.msg-fallback {
+    width: 40px;
+    height: 40px;
+    flex-shrink: 0;
+    border-radius: 50%;
+    background: var(--bg-elevated);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: var(--text-muted);
+    border: 1px solid var(--border);
+}
+
+.msg-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.msg-header {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+}
+
+.msg-author {
+    font-weight: 600;
+    font-size: 15px;
+}
+
+.msg-time {
+    font-size: 11px;
+    color: var(--text-muted);
+}
+
+.msg-text {
+    line-height: 1.6;
+    color: #e2e8f0;
+    font-size: 15px;
+    word-break: break-word;
+}
+
+.chat-img {
+    max-width: 100%;
+    max-height: 300px;
+    border-radius: 8px;
+    margin-top: 8px;
+    display: block;
+    object-fit: scale-down;
+}
+
+.message.system {
+    justify-content: center;
+    font-size: 13px;
+    color: var(--text-muted);
+    font-style: italic;
+    opacity: 0.7;
+}
+
+.input-area {
+    padding: 24px;
+    background: var(--bg-base);
+    border-top: 1px solid var(--border);
+}
+
+.chat-box {
+    display: flex;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 6px 6px 6px 20px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.chat-box:focus-within {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 1px var(--accent-glow);
+}
+
+.chat-box input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    color: white;
+    font-family: inherit;
+    font-size: 15px;
+    outline: none;
+}
+
+.chat-box .icon-btn.brand {
+    background: var(--accent);
+    color: white;
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+}
+
+.chat-box .icon-btn.brand i {
+    color: white !important;
+}
+
+/* Fix de l'icone avion */
+.chat-box .icon-btn.brand:hover {
+    background: var(--accent-hover);
+}
+
+@media (max-width: 768px) {
+
+    .messages-list,
+    .input-area {
+        padding-left: 16px;
+        padding-right: 16px;
+    }
+
+    .video-arena {
+        max-height: 40%;
+    }
+}
